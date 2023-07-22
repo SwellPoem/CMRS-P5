@@ -4,11 +4,10 @@ clc
 import Drone.*
 import Artva.*
 import Plotter.*
-import simulation_functions.*
 
 % Defining constants
 NONE = -1;
-drones_num = 5;
+drones_num = 10;
 drones_list = NONE;
 drones_x_array = zeros(1, drones_num);
 drones_y_array = zeros(1, drones_num);
@@ -45,8 +44,8 @@ while true
         est_Y(i) = signal;
     end
 
-    est_X = est_X + inv(est_S)*est_H*(est_Y + est_H.'*est_X);
-    est_X(isnan(est_X))=0;
+    est_X = est_X + inv(est_S)*est_H*(est_Y - est_H.'*est_X);
+    %est_X(isnan(est_X))=0;
     est_S = est_beta*est_S + est_H * est_H.';
     est_artva.position = [est_X(7), est_X(8), est_X(9)];
 
@@ -56,9 +55,9 @@ while true
 
     if(show_simulation)
         p.draw([drones_x_array; drones_y_array], artva.position, est_artva.position);
+        pause(time_step)
     end
     time_instant = time_instant + time_step;
-    pause(time_step)
 end
 
 p.close();
