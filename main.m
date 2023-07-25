@@ -78,6 +78,7 @@ function [drones_list, artva, est_artva] =  setup(drones_num)
     disp("Setup completed!")
 end
 
+% New trajectories (circle, border patrol)
 function new_drones_list = replan(drones_list, drones_num)
     for i = 1:drones_num 
         if(drones_list{i}.state ~= "idle" || ~drones_list{i}.isAtGoal())
