@@ -19,14 +19,26 @@ classdef Plotter < handle
         end
 
         function obj = draw(obj, drones_pos, artva_pos, est_artva_pos)
+            global trajectory_type;
             if(~obj.is_initialized)
                 obj.scatter_artva = scatter(artva_pos(1), artva_pos(2), '*', 'red');
                 hold on
                 obj.scatter_est_artva = scatter(est_artva_pos(1), est_artva_pos(2), '*', 'green');
                 obj.scatter_drones = scatter(drones_pos(1,:), drones_pos(2,:), '*', 'blue');
                 obj.ax = gca; % gca is Matlab's way of getting the current axes
-                obj.ax.XLim = [0 1];
-                obj.ax.YLim = [0 1];
+                if trajectory_type == "rect" || trajectory_type == "patrol"
+                    obj.ax.XLim = [0 1];
+                    obj.ax.YLim = [0 1];
+                elseif trajectory_type == "circ"
+                    global angles;
+                    obj.ax.XLim = [-1 1];
+                    obj.ax.YLim = [-1 1];
+                    viscircles([0, 0], 1, 'LineStyle', '--', 'EdgeColor', 'b');
+                    for i = 1:length(angles)
+                        angle = deg2rad(angles(i));
+                        line([0, cos(angle)], [0, sin(angle)],'LineStyle','--','Color','r');
+                    end     
+                end 
                 obj.is_initialized = true;
                 hold off
             else
