@@ -7,7 +7,7 @@ import Plotter.*
 
 % Defining constants
 NONE = -1;
-drones_num = 5;
+drones_num = 2;
 drones_list = NONE;
 drones_x_array = zeros(1, drones_num);
 drones_y_array = zeros(1, drones_num);
@@ -22,11 +22,16 @@ p = NONE;
 time_instant = 0;
 time_step = 0.01;
 show_simulation = true;
-
+control_time = 1;
+control_steps = int16(control_time/time_step);
+history_est_artva = zeros(3, control_steps);
+check = ones(1, control_steps);
+k = 1;
+threshold = 0.00001; % 0.001 m --> 1mm
 
 % Global vars for switching trajectories can be "circ","patrol","rect"
 global trajectory_type;
-trajectory_type = "circ";
+trajectory_type = "rect";
 
 % Init
 [drones_list, artva, est_artva] = setup(drones_num);
@@ -35,12 +40,12 @@ if(show_simulation)
     p = Plotter();
 end
 
+
 while true
 
     drones_list = replan(drones_list, drones_num, est_artva.position);
 
     for i = 1:drones_num
-%       drones_list{i}.position = drones_list{i}.position + time_step*[cos(pi*(i-1)/(2*(drones_num-1))), sin(pi*(i-1)/(2*(drones_num-1))), 0];
         drones_list{i} = drones_list{i}.move();
         drones_x_array(i) = drones_list{i}.position(1);
         drones_y_array(i) = drones_list{i}.position(2);
@@ -53,6 +58,35 @@ while true
     est_S = est_beta*est_S + est_H * est_H.';
     est_artva.position = [est_X(7), est_X(8), est_X(9)];
 
+    % Save the values to check when the algorithm is not updating the values anymore
+    history_est_artva(:,k) =     [est_X(7); 
+                                  est_X(8); 
+                                  est_X(9)];
+    last_estimate = history_est_artva(:, control_steps);
+    
+    if k > 1
+        if norm(history_est_artva(:,k) - history_est_artva(:,k-1)) < threshold
+            check(k) = 0;
+        end
+    end
+
+    if k == 1
+        if norm(history_est_artva(:,k) - last_estimate) < threshold
+            check(k) = 0;
+        end
+    end
+    
+    % If for consecutives times the check is always true then stop the simulation
+    if sum(check) == 0 && (norm(history_est_artva(:,1) - history_est_artva(:,control_steps)) < threshold)
+        disp("You have estimated the goal with an accuracy of: " + threshold*100 + " m");
+        break
+    end
+
+    if k >= control_steps
+        k = mod(k,control_steps);
+        history_est_artva = zeros(3,control_steps);
+     end
+
     if drones_list{1}.position(2) > 1
         break;
     end
@@ -60,8 +94,9 @@ while true
     if(show_simulation)
         p.draw([drones_x_array; drones_y_array], artva.position, est_artva.position);
         pause(time_step)
-    end
+    end  
     time_instant = time_instant + time_step;
+    k = k + 1;
 end
 
 p.close();
@@ -133,8 +168,6 @@ function new_drones_list = replan(drones_list, drones_num, est_artva_pos)
 
     elseif trajectory_type == "circ"
         all_idle = true;
-        replanning_counter = 0;
-        initial_drone_list = drones_list;
 
         for i = 1:drones_num
             if drones_list{i}.state ~= "idle" || ~drones_list{i}.isAtGoal()
@@ -143,27 +176,15 @@ function new_drones_list = replan(drones_list, drones_num, est_artva_pos)
         end
 
         if all_idle
-            replanning_counter = replanning_counter + 1;
             disp("Replanning!");
             new_drones_list = cell([1, drones_num]);
-            if replanning_counter == 1
-                for i = 1:drones_num
-                    current_drone = drones_list{i};
-                    current_drone = current_drone.setGoal(est_artva_pos);
-                    new_drones_list{i} = current_drone;
-                end
-            elseif replanning_counter == 2
-                for i = 1:drones_num
-                    current_drone = drones_list{i};
-                    current_drone = current_drone.setGoal([0,0,0]);
-                    new_drones_list{i} = current_drone;       
-                end
-            elseif replanning_counter == 3
-                replanning_counter = 0;
-                new_drones_list = initial_drone_list;
-            end 
+            for i = 1:drones_num
+                current_drone = drones_list{i};
+                current_drone = current_drone.setGoal(est_artva_pos);
+                new_drones_list{i} = current_drone;
+            end
         else
-            new_drones_list=drones_list;
+            new_drones_list = drones_list;  
         end
         return
 
@@ -176,3 +197,4 @@ function new_drones_list = replan(drones_list, drones_num, est_artva_pos)
         error("Unknown trajectory type: %s", trajectory);
     end
 end
+
