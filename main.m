@@ -7,7 +7,7 @@ import Plotter.*
 
 % Defining constants
 NONE = -1;
-drones_num = 2;
+drones_num = 10;
 drones_list = NONE;
 drones_x_array = zeros(1, drones_num);
 drones_y_array = zeros(1, drones_num);
@@ -28,6 +28,14 @@ history_est_artva = zeros(3, control_steps);
 check = ones(1, control_steps);
 k = 1;
 threshold = 0.00001; % 0.001 m --> 1mm
+
+% Global var for distributed or centralized
+global distributed_estimation_mode;
+distributed_estimation_mode = false;
+est_artva_x_array = zeros(1, drones_num);
+est_artva_y_array = zeros(1, drones_num);
+sync_delay = time_step; % In seconds
+
 
 % Global vars for switching trajectories can be "circ","patrol","rect"
 global trajectory_type;
