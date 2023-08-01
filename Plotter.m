@@ -22,11 +22,15 @@ classdef Plotter < handle
             if(~obj.is_initialized)
                 obj.scatter_artva = scatter(artva_pos(1), artva_pos(2), '*', 'red');
                 hold on
-                obj.scatter_est_artva = scatter(est_artva_pos(1), est_artva_pos(2), '*', 'green');
+                if(size(est_artva_pos, 1) == 2)
+                    obj.scatter_est_artva = scatter(est_artva_pos(1,:), est_artva_pos(2,:), '*', 'green');
+                elseif(size(est_artva_pos, 1) == 1)
+                    obj.scatter_est_artva = scatter(est_artva_pos(1), est_artva_pos(2), '*', 'green');
+                end
                 obj.scatter_drones = scatter(drones_pos(1,:), drones_pos(2,:), '*', 'blue');
                 obj.ax = gca; % gca is Matlab's way of getting the current axes
-                obj.ax.XLim = [0 1];
-                obj.ax.YLim = [0 1];
+                obj.ax.XLim = [-0.5 1.5];
+                obj.ax.YLim = [-0.5 1.5];
                 obj.is_initialized = true;
                 hold off
             else
@@ -34,8 +38,13 @@ classdef Plotter < handle
                 obj.scatter_drones.YData = drones_pos(2,:);
                 obj.scatter_artva.XData = artva_pos(1);
                 obj.scatter_artva.YData = artva_pos(2);
-                obj.scatter_est_artva.XData = est_artva_pos(1);
-                obj.scatter_est_artva.YData = est_artva_pos(2);
+                if(size(est_artva_pos, 1) == 2)
+                    obj.scatter_est_artva.XData = est_artva_pos(1,:);
+                    obj.scatter_est_artva.YData = est_artva_pos(2,:);
+                elseif(size(est_artva_pos, 1) == 1)
+                    obj.scatter_est_artva.XData = est_artva_pos(1);
+                    obj.scatter_est_artva.YData = est_artva_pos(2);
+                end
             end
         end
 

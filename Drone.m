@@ -4,9 +4,17 @@ classdef Drone
         position
         initial_position
         goal
-        state % either "idle", "accelerating", "coasting", "decelerating"
+        state % Either "idle", "accelerating", "coasting", "decelerating"
 
-        % trajectory stuff
+        % Decentralized estimation
+		est_H
+		est_Y
+        est_S
+        est_beta
+        est_X
+        est_pos
+
+        % Trajectory stuff
         time_trajectory_instant
         v_max
         a_max
@@ -23,6 +31,14 @@ classdef Drone
                 obj.initial_position = -1;
                 obj.goal = -1;
                 obj.state = "idle";
+                
+		        global drones_num;
+		        obj.est_H = zeros(10, drones_num);
+		        obj.est_Y = zeros(drones_num, 1);
+                obj.est_S = eye(10);
+                obj.est_beta = 1.0;
+                obj.est_X = zeros(10, 1);
+                obj.est_pos = zeros(3, 1);
 
                 obj.time_trajectory_instant = 0;
                 obj.v_max = 0.05; % 5 m/s
@@ -53,6 +69,8 @@ classdef Drone
         end
 
         function obj = move(obj)
+            global time_step;
+
             if(obj.time_total <= obj.time_trajectory_instant)
                 return
             end
@@ -96,7 +114,7 @@ classdef Drone
 
             sigma = sigma / obj.trajectory_length;
 
-            obj.time_trajectory_instant = obj.time_trajectory_instant + 0.01;
+            obj.time_trajectory_instant = obj.time_trajectory_instant + time_step;
 
             % Trajectory - geometric part
             obj.position = obj.goal * sigma + ...
@@ -112,5 +130,35 @@ classdef Drone
             end
 
         end
+
+        function obj = sync(obj, drones_list)
+            
+            % Update est_H
+            prev_id = obj.id-1;
+            next_id = obj.id+1;
+            if(prev_id>=1)
+                obj.est_H(:, prev_id) = drones_list{prev_id}.est_H(:, prev_id);
+            elseif(next_id<=size(drones_list, 2))
+                obj.est_H(:, next_id) = drones_list{next_id}.est_H(:, next_id);
+            end
+
+            % Update est_S
+            obj.est_S = obj.est_beta*obj.est_S + obj.est_H * obj.est_H.';
+        end
+
+        function obj = estimate(obj, artva)
+            % TODO
+            [phi, signal] = artva.getSignal(obj.position);
+          
+            obj.est_H(:,obj.id) = phi;
+            obj.est_Y(obj.id) = signal;
+            % est_X = est_X + inv(est_S)*est_H*(est_Y - est_H.'*est_X);
+            obj.est_X = obj.est_X + obj.est_S\(obj.est_H*(obj.est_Y - obj.est_H.'*obj.est_X)); % Should be better than previous version
+            obj.est_S = obj.est_beta*obj.est_S + obj.est_H * obj.est_H.';
+            obj.est_pos(1) = obj.est_X(7);
+            obj.est_pos(2) = obj.est_X(8);
+            obj.est_pos(3) = obj.est_X(9);
+        end
+        
     end
 end
