@@ -39,7 +39,7 @@ sync_delay = time_step; % In seconds
 
 % Global vars for switching trajectories can be "circ","patrol","rect"
 global trajectory_type;
-trajectory_type = "rect";
+trajectory_type = "circ";
 
 % Init
 [drones_list, artva, est_artva] = setup(drones_num);

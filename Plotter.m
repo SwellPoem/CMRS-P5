@@ -21,30 +21,32 @@ classdef Plotter < handle
         function obj = draw(obj, drones_pos, artva_pos, est_artva_pos)
             global trajectory_type;
             global distributed_estimation_mode;
-            if(~obj.is_initialized)
-
+            if (~obj.is_initialized)
                 % Generate colors for plot
-                n_drones = size(drones_pos,2);
+                n_drones = size(drones_pos, 2);
                 if distributed_estimation_mode == false
                     C = linspecer(3);
                     obj.scatter_artva = scatter(artva_pos(1), artva_pos(2), 100, C(2, :), '*');
                     hold on
                     obj.scatter_est_artva = scatter(est_artva_pos(1), est_artva_pos(2), 100, C(3, :), '*');
-                    obj.scatter_drones = scatter(drones_pos(1,:), drones_pos(2,:), 100, C(1,:), 'o', 'filled');
+                    obj.scatter_drones = scatter(drones_pos(1, :), drones_pos(2, :), 100, C(1, :), 'o', 'filled');
+    
+                    % Legend
+                    legend('true position', 'estimated position', 'drones position', 'Location', 'best');
                 elseif distributed_estimation_mode == true
                     C = linspecer(n_drones*2+1, 'sequential');
                     obj.scatter_artva = scatter(artva_pos(1), artva_pos(2), 100, C(1, :), '*');
                     hold on
                     obj.scatter_est_artva = scatter(est_artva_pos(1), est_artva_pos(2), 100, C(3, :), '*');
-                    obj.scatter_drones = scatter(drones_pos(1,:), drones_pos(2,:), 100, C(2,:), 'o', 'filled');
+                    obj.scatter_drones = scatter(drones_pos(1, :), drones_pos(2, :), 100, C(2, :), 'o', 'filled');
                 end
                 obj.ax = gca; % gca is Matlab's way of getting the current axes
-
+    
                 if trajectory_type == "rect" || trajectory_type == "patrol"
                     obj.ax.XLim = [0 1];
                     obj.ax.YLim = [0 1];
                     for i = 1:n_drones
-                        line([(i-1/2)/n_drones, (i-1/2)/n_drones],[0, 1],'LineStyle','--','Color','black')
+                        line([(i-1/2)/n_drones, (i-1/2)/n_drones], [0, 1], 'LineStyle', '--', 'Color', 'black', 'HandleVisibility', 'off')
                     end
                 elseif trajectory_type == "circ"
                     global angles;
@@ -53,14 +55,14 @@ classdef Plotter < handle
                     viscircles([0, 0], 1, 'LineStyle', '--', 'EdgeColor', 'black');
                     for i = 1:length(angles)
                         angle = deg2rad(angles(i));
-                        line([0, cos(angle)], [0, sin(angle)],'LineStyle','--','Color','black');
+                        line([0, cos(angle)], [0, sin(angle)], 'LineStyle', '--', 'Color', 'black', 'HandleVisibility', 'off');
                     end     
                 end 
                 obj.is_initialized = true;
                 hold off
             else
-                obj.scatter_drones.XData = drones_pos(1,:);
-                obj.scatter_drones.YData = drones_pos(2,:);
+                obj.scatter_drones.XData = drones_pos(1, :);
+                obj.scatter_drones.YData = drones_pos(2, :);
                 obj.scatter_artva.XData = artva_pos(1);
                 obj.scatter_artva.YData = artva_pos(2);
                 obj.scatter_est_artva.XData = est_artva_pos(1);
@@ -73,3 +75,4 @@ classdef Plotter < handle
         end
     end
 end
+
