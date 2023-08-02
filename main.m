@@ -5,7 +5,21 @@ import Drone.*
 import Artva.*
 import Plotter.*
 
-% Defining constants
+%% CHOSEN Variables
+show_simulation = true;
+global threshold
+threshold = 0.00001; % 0.001 m --> 1mm
+control_time = 1;
+global time_step;
+time_step = 0.01;
+global distributed_estimation_mode;
+distributed_estimation_mode = true;
+global current_planner_state;
+current_planner_state = "search"; % Either "init", "search", "found"
+global trajectory_type;
+trajectory_type = "circ"; % Either "circ","patrol","rect"
+
+%% Constants
 NONE = -1;
 global drones_num;
 drones_num = 5;
@@ -21,37 +35,27 @@ est_X = zeros(10, 1);
 est_H = zeros(10, drones_num);
 p = NONE;
 time_instant = 0;
-global time_step;
-time_step = 0.01;
-show_simulation = true;
-control_time = 1;
+global control_steps;
 control_steps = int16(control_time/time_step);
+global history_est_artva;
 history_est_artva = zeros(3, control_steps);
 check = ones(1, control_steps);
 k = 1;
-threshold = 0.00001; % 0.001 m --> 1mm
 
-% Global var for distributed or centralized
-global distributed_estimation_mode;
-distributed_estimation_mode = false;
+% Variables specific to Distributed mode
 est_artva_x_array = zeros(1, drones_num);
 est_artva_y_array = zeros(1, drones_num);
 sync_delay = 1; % In seconds
 
-global current_planner_state;
-current_planner_state = "search"; % Either "init", "search", "found"
 
-% Global vars for switching trajectories can be "circ","patrol","rect"
-global trajectory_type;
-trajectory_type = "circ";
-
-% Init
+%% Init
 [drones_list, artva, est_artva] = setup(drones_num);
 
 if(show_simulation)
     p = Plotter();
 end
 
+%% Simulation loop
 while true
 
     drones_list = replan(drones_list, drones_num, est_artva.position);
@@ -67,10 +71,17 @@ while true
 
     if(current_planner_state == "search")
         if(~distributed_estimation_mode)
-%             est_X = est_X + inv(est_S)*est_H*(est_Y - est_H.'*est_X);
+%           est_X = est_X + inv(est_S)*est_H*(est_Y - est_H.'*est_X);
             est_X = est_X + est_S\(est_H*(est_Y - est_H.'*est_X)); % Should be better than previous version
             est_S = est_beta*est_S + est_H * est_H.';
             est_artva.position = [est_X(7), est_X(8), est_X(9)];
+
+            [result,check,k] = check_threshold([est_X(7), est_X(8), est_X(9)]',check,k);
+
+            if result
+                break
+            end
+
         else
 			% TODO
             for i = 1:drones_num
@@ -88,35 +99,6 @@ while true
             end
         end
     end
-
-    % Save the values to check when the algorithm is not updating the values anymore
-    history_est_artva(:,k) =     [est_X(7); 
-                                  est_X(8); 
-                                  est_X(9)];
-    last_estimate = history_est_artva(:, control_steps);
-    
-    if k > 1
-        if norm(history_est_artva(:,k) - history_est_artva(:,k-1)) < threshold
-            check(k) = 0;
-        end
-    end
-
-    if k == 1
-        if norm(history_est_artva(:,k) - last_estimate) < threshold
-            check(k) = 0;
-        end
-    end
-    
-    % If for consecutives times the check is always true then stop the simulation
-    if sum(check) == 0 && (norm(history_est_artva(:,1) - history_est_artva(:,control_steps)) < threshold)
-        disp("You have estimated the goal with an accuracy of: " + threshold*100 + " m");
-        break
-    end
-
-    if k >= control_steps
-        k = mod(k,control_steps);
-        history_est_artva = zeros(3,control_steps);
-     end
 
     if drones_list{1}.position(2) > 1
         break;
@@ -136,7 +118,41 @@ end
 
 p.close();
 
-%%% USEFUL FUNCTIONS
+%% Functions
+
+function [result,check,k] = check_threshold(est_arva_pos,check,k)
+    result = false;
+    global threshold;
+    global history_est_artva;
+    global control_steps;
+
+% Save the values to check when the algorithm is not updating the values anymore
+    history_est_artva(:,k) =  est_arva_pos;
+    last_estimate = history_est_artva(:, control_steps);
+    
+    if k > 1
+        if norm(history_est_artva(:,k) - history_est_artva(:,k-1)) < threshold
+            check(k) = 0;
+        end
+    end
+
+    if k == 1
+        if norm(history_est_artva(:,k) - last_estimate) < threshold
+            check(k) = 0;
+        end
+    end
+
+    % If for consecutives times the check is always true then stop the simulation
+    if sum(check) == 0 && (norm(history_est_artva(:,1) - history_est_artva(:,control_steps)) < threshold)
+        disp("You have estimated the goal with an accuracy of: " + threshold*100 + " m");
+        result = true;
+    end
+
+    if k >= control_steps
+        k = mod(k,control_steps);
+        history_est_artva = zeros(3,control_steps);
+    end
+end
 
 function [drones_list, artva, est_artva] =  setup(drones_num)
     disp("Setup started!")
@@ -173,12 +189,9 @@ function [drones_list, artva, est_artva] =  setup(drones_num)
     end 
 
     est_artva = Artva([0.0, 0.0, 0]);
-
-
     disp("Setup completed!")
 end
 
-% New trajectories (circle, border patrol)
 function new_drones_list = replan(drones_list, drones_num, est_artva_pos)
     global trajectory_type
     if trajectory_type == "rect"
