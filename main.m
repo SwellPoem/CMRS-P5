@@ -29,7 +29,7 @@ current_planner_state = "search"; % Either "init", "search", "found"
 
 % Global vars for switching trajectories can be "circ","patrol","rect"
 global trajectory_type;
-trajectory_type = "circ";
+trajectory_type = "rect";
 
 % Distributed part
 global distributed_estimation_mode;

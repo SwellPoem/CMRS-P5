@@ -34,7 +34,6 @@ classdef Drone
                 
 		        global drones_num;
 		        obj.est_H = zeros(10, drones_num);
-		        obj.est_H(10, :) = ones(1, drones_num);
 		        obj.est_Y = zeros(drones_num, 1);
                 obj.est_S = eye(10);
                 obj.est_beta = 1.0;
