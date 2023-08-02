@@ -7,7 +7,8 @@ import Plotter.*
 
 % Defining constants
 NONE = -1;
-drones_num = 10;
+global drones_num;
+drones_num = 5;
 drones_list = NONE;
 drones_x_array = zeros(1, drones_num);
 drones_y_array = zeros(1, drones_num);
@@ -20,6 +21,7 @@ est_X = zeros(10, 1);
 est_H = zeros(10, drones_num);
 p = NONE;
 time_instant = 0;
+global time_step;
 time_step = 0.01;
 show_simulation = true;
 control_time = 1;
@@ -34,8 +36,10 @@ global distributed_estimation_mode;
 distributed_estimation_mode = false;
 est_artva_x_array = zeros(1, drones_num);
 est_artva_y_array = zeros(1, drones_num);
-sync_delay = time_step; % In seconds
+sync_delay = 1; % In seconds
 
+global current_planner_state;
+current_planner_state = "search"; % Either "init", "search", "found"
 
 % Global vars for switching trajectories can be "circ","patrol","rect"
 global trajectory_type;
@@ -47,7 +51,6 @@ trajectory_type = "circ";
 if(show_simulation)
     p = Plotter();
 end
-
 
 while true
 
@@ -62,9 +65,29 @@ while true
         est_Y(i) = signal;
     end
 
-    est_X = est_X + inv(est_S)*est_H*(est_Y - est_H.'*est_X);
-    est_S = est_beta*est_S + est_H * est_H.';
-    est_artva.position = [est_X(7), est_X(8), est_X(9)];
+    if(current_planner_state == "search")
+        if(~distributed_estimation_mode)
+%             est_X = est_X + inv(est_S)*est_H*(est_Y - est_H.'*est_X);
+            est_X = est_X + est_S\(est_H*(est_Y - est_H.'*est_X)); % Should be better than previous version
+            est_S = est_beta*est_S + est_H * est_H.';
+            est_artva.position = [est_X(7), est_X(8), est_X(9)];
+        else
+			% TODO
+            for i = 1:drones_num
+                if(mod(time_instant, sync_delay) <= 0.01)
+				    drones_list{i} = drones_list{i}.sync(drones_list);
+                    if(i==1)
+                        disp("Syncing")
+                    end
+                end
+
+				drones_list{i} = drones_list{i}.estimate(artva);
+                est_artva_x_array(i) = drones_list{i}.est_pos(1);
+                est_artva_y_array(i) = drones_list{i}.est_pos(2);
+
+            end
+        end
+    end
 
     % Save the values to check when the algorithm is not updating the values anymore
     history_est_artva(:,k) =     [est_X(7); 
@@ -100,7 +123,11 @@ while true
     end
 
     if(show_simulation)
-        p.draw([drones_x_array; drones_y_array], artva.position, est_artva.position);
+        if(~distributed_estimation_mode)
+            p.draw([drones_x_array; drones_y_array], artva.position, est_artva.position);
+        else
+            p.draw([drones_x_array; drones_y_array], artva.position, [est_artva_x_array; est_artva_y_array]);
+        end
         pause(time_step)
     end  
     time_instant = time_instant + time_step;
@@ -109,7 +136,8 @@ end
 
 p.close();
 
-% Useful functions
+%%% USEFUL FUNCTIONS
+
 function [drones_list, artva, est_artva] =  setup(drones_num)
     disp("Setup started!")
     global trajectory_type; 
@@ -204,5 +232,6 @@ function new_drones_list = replan(drones_list, drones_num, est_artva_pos)
     else
         error("Unknown trajectory type: %s", trajectory);
     end
+
 end
 

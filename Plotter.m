@@ -21,6 +21,7 @@ classdef Plotter < handle
         function obj = draw(obj, drones_pos, artva_pos, est_artva_pos)
             global trajectory_type;
             global distributed_estimation_mode;
+            
             if (~obj.is_initialized)
                 % Generate colors for plot
                 n_drones = size(drones_pos, 2);
@@ -58,15 +59,34 @@ classdef Plotter < handle
                         line([0, cos(angle)], [0, sin(angle)], 'LineStyle', '--', 'Color', 'black', 'HandleVisibility', 'off');
                     end     
                 end 
+
                 obj.is_initialized = true;
+                if trajectory_type == "rect" || trajectory_type == "patrol"
+                    obj.ax.XLim = [-0.5 1.5];
+                    obj.ax.YLim = [-0.5 1.5];
+                elseif trajectory_type == "circ"
+                    global angles;
+                     obj.ax.XLim = [-1 1];
+                     obj.ax.YLim = [-1 1];
+                    viscircles([0, 0], 1, 'LineStyle', '--', 'EdgeColor', 'b');
+                    for i = 1:length(angles)
+                        angle = deg2rad(angles(i));
+                        line([0, cos(angle)], [0, sin(angle)],'LineStyle','--','Color','r');
+                    end     
+                end
                 hold off
             else
                 obj.scatter_drones.XData = drones_pos(1, :);
                 obj.scatter_drones.YData = drones_pos(2, :);
                 obj.scatter_artva.XData = artva_pos(1);
                 obj.scatter_artva.YData = artva_pos(2);
-                obj.scatter_est_artva.XData = est_artva_pos(1);
-                obj.scatter_est_artva.YData = est_artva_pos(2);
+                if(size(est_artva_pos, 1) == 2)
+                    obj.scatter_est_artva.XData = est_artva_pos(1,:);
+                    obj.scatter_est_artva.YData = est_artva_pos(2,:);
+                elseif(size(est_artva_pos, 1) == 1)
+                    obj.scatter_est_artva.XData = est_artva_pos(1);
+                    obj.scatter_est_artva.YData = est_artva_pos(2);
+                end
             end
         end
 
