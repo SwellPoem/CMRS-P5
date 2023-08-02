@@ -37,9 +37,9 @@ classdef Plotter < handle
                     obj.scatter_artva = scatter(artva_pos(1), artva_pos(2), 100, C(2, :), '*');
                     hold on
                     obj.scatter_est_artva = scatter(est_artva_pos(1), est_artva_pos(2), 100, C(end, :), '*');
-                    obj.scatter_drones = scatter(drones_pos(1, :), drones_pos(2, :), 100, C(1:n_drones, :), 'o', 'filled');
+                    obj.scatter_drones = scatter(drones_pos(1, :), drones_pos(2, :), 100, C(1, :), 'o', 'filled');
                     % Legend
-                    legend('true position', 'estimated position', 'drones position', 'Location', 'best','AutoUpdate','off');
+                    %legend('true position', 'estimated position', 'drones position', 'Location', 'NorthEast','AutoUpdate','off');
 
                 elseif distributed_estimation_mode == true
                     % Plot utilities
