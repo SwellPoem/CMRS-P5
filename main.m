@@ -29,7 +29,7 @@ current_planner_state = "search"; % Either "init", "search", "found"
 
 % Global vars for switching trajectories can be "circ","patrol","rect"
 global trajectory_type;
-trajectory_type = "rect";
+trajectory_type = "circ";
 
 % Distributed part
 global distributed_estimation_mode;
@@ -52,15 +52,17 @@ while true
     for i = 1:drones_num
 %        drones_list{i}.position = drones_list{i}.position + time_step*[cos(pi*(i-1)/(2*(drones_num-1))), sin(pi*(i-1)/(2*(drones_num-1))), 0];
         drones_list{i} = drones_list{i}.move();
-        drones_x_array(i) = drones_list{i}.position(1);
-        drones_y_array(i) = drones_list{i}.position(2);
-        [phi, signal] = artva.getSignal(drones_list{i}.position);
-        est_H(:,i) = phi;
-        est_Y(i) = signal;
     end
 
     if(current_planner_state == "search")
         if(~distributed_estimation_mode)
+            for i = 1:drones_num
+                drones_x_array(i) = drones_list{i}.position(1);
+                drones_y_array(i) = drones_list{i}.position(2);
+                [phi, signal] = artva.getSignal(drones_list{i}.position);
+                est_H(:,i) = phi;
+                est_Y(i) = signal;
+            end
 %             est_X = est_X + inv(est_S)*est_H*(est_Y - est_H.'*est_X);
             est_X = est_X + est_S\(est_H*(est_Y - est_H.'*est_X)); % Should be better than previous version
             est_S = est_beta*est_S + est_H * est_H.';

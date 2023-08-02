@@ -147,7 +147,7 @@ classdef Drone
             end
 
             % Update est_S
-            %obj.est_S = obj.est_beta*obj.est_S + obj.est_H * obj.est_H.';
+            obj.est_S = obj.est_beta*obj.est_S + obj.est_H * obj.est_H.';
         end
 
         function obj = estimate(obj, artva)
