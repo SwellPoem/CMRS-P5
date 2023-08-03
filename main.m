@@ -10,13 +10,14 @@ show_simulation = true;
 global threshold
 threshold = 0.00001; % 0.001 m --> 1mm
 threshold = 0.0001; % 0.01 m --> 1cm
+global control_time;
 control_time = 1;
 global time_step;
 time_step = 0.01;
 global distributed_estimation_mode;
 distributed_estimation_mode = true;
 global trajectory_type;
-trajectory_type = "rect"; % Either "circ","patrol","rect"
+trajectory_type = "circ"; % Either "circ","patrol","rect"
 
 %% Constants
 NONE = -1;
@@ -77,7 +78,7 @@ while true
         est_S = est_beta*est_S + est_H * est_H.';
         est_artva.position = [est_X(7), est_X(8), est_X(9)];
 
-        [result,check,k] = check_threshold([est_X(7), est_X(8), est_X(9)]',check,k);
+        [result,check,k] = stopping_criterium([est_X(7), est_X(8), est_X(9)]',check,k);
 
         if result
             break
@@ -106,7 +107,7 @@ while true
     
         end
 
-         [result,check,k] = check_threshold([est_artva_x_array;est_artva_y_array;zeros(1,drones_num)],check,k);
+         [result,check,k] = stopping_criterium([est_artva_x_array;est_artva_y_array;zeros(1,drones_num)],check,k);
 
         if result
             break
@@ -134,7 +135,7 @@ p.close();
 
 %% Functions
 
-function [result,check,k] = check_threshold(est_arva_pos,check,k)
+function [result,check,k] = stopping_criterium(est_arva_pos,check,k)
     result = false;
     global distributed_estimation_mode;
     global threshold;
@@ -142,6 +143,7 @@ function [result,check,k] = check_threshold(est_arva_pos,check,k)
     global control_steps;
     global drones_num;
     global majority;
+    global control_time;
     
     if(~distributed_estimation_mode)
     % Save the values to check when the algorithm is not updating the values anymore
@@ -194,7 +196,7 @@ function [result,check,k] = check_threshold(est_arva_pos,check,k)
             % CONSENSUS: if the majority agrees (not on the same values, but its value dont change then stop)
             if sum(check(i,:)) == 0 && (norm(history_est_artva(start_idx:end_idx,1) - history_est_artva(start_idx:end_idx,control_steps)) < threshold)
                majority = majority + 1;
-               majority
+               disp("Drones that have not update their estimate in less more than " + control_time + "s are: " + majority)
             end
          end
 
