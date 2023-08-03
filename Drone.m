@@ -34,7 +34,7 @@ classdef Drone
                 
 		        global drones_num;
 		        obj.est_H = zeros(10, drones_num);
-		        obj.est_H(10, :) = ones(1, drones_num);
+		        %obj.est_H(10, :) = ones(1, drones_num);
 		        obj.est_Y = zeros(drones_num, 1);
                 obj.est_S = eye(10);
                 obj.est_beta = 1.0;
@@ -134,27 +134,27 @@ classdef Drone
 
         function obj = sync(obj, drones_list)
             
-            % Update est_H
+            % Update est_H and est_Y
             prev_id = obj.id-1;
             next_id = obj.id+1;
 
-            if(prev_id>=1)
+            if(prev_id >= 1)
                 obj.est_H(:, prev_id) = drones_list{prev_id}.est_H(:, prev_id);
                 obj.est_Y(prev_id) = drones_list{prev_id}.est_Y(prev_id);
             end
-            if(next_id<=size(drones_list, 2))
+            if(next_id <= size(drones_list, 2))
                 obj.est_H(:, next_id) = drones_list{next_id}.est_H(:, next_id);
                 obj.est_Y(next_id) = drones_list{next_id}.est_Y(next_id);
             end
 
             % Update est_S
-            %obj.est_S = obj.est_beta*obj.est_S + obj.est_H * obj.est_H.';
+            obj.est_S = obj.est_beta*obj.est_S + obj.est_H * obj.est_H.';
         end
 
         function obj = estimate(obj, artva)
             % TODO
             [phi, signal] = artva.getSignal(obj.position);
-          
+            
             obj.est_H(:,obj.id) = phi;
             obj.est_Y(obj.id) = signal;
             % est_X = est_X + inv(est_S)*est_H*(est_Y - est_H.'*est_X);
