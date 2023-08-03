@@ -42,6 +42,10 @@ classdef Drone
                 obj.est_pos = zeros(3, 1);
 
                 obj.time_trajectory_instant = 0;
+                %TEMP
+%                 obj.v_max = 0.5; 
+%                 obj.a_max = 0.1; 
+                %REAL
                 obj.v_max = 0.05; % 5 m/s
                 obj.a_max = 0.01; % 1 m/s
                 obj.time_to_full_speed = obj.v_max / obj.a_max;

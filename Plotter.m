@@ -61,7 +61,7 @@ classdef Plotter < handle
                 end
                 obj.ax = gca; % gca is Matlab's way of getting the current axes
 
-                if trajectory_type == "rect" || trajectory_type == "patrol"
+                if trajectory_type == "rect"
                     obj.ax.XLim = [0 1];
                     obj.ax.YLim = [0 1];
                     for i = 1:n_drones
@@ -76,6 +76,16 @@ classdef Plotter < handle
                         angle = deg2rad(angles(i));
                         line([0, cos(angle)], [0, sin(angle)], 'LineStyle', '--', 'Color', 'black', 'HandleVisibility', 'off');
                     end     
+                elseif trajectory_type == "patrol"
+                    % draw a circle centered on the bottom left corner and with radius 1
+                    global angles;
+                    obj.ax.XLim = [0 1];
+                    obj.ax.YLim = [0 1];
+                    viscircles([0, 0], 1, 'LineStyle', '--', 'EdgeColor', 'b');
+                    for i = 1:length(angles)
+                        angle = deg2rad(angles(i));
+                        line([0, cos(angle)], [0, sin(angle)],'LineStyle','--','Color','r','HandleVisibility', 'off');
+                    end
                 end
                 obj.is_initialized = true;
                 hold off
