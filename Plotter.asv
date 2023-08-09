@@ -9,7 +9,6 @@ classdef Plotter < handle
         est_labels_handles % New property to store the handles of estimate text labels
         drone_labels_handles % New property to store the handles of drone text labels
         is_text_updated % New property to track if text is updated
-        scatter_est_mean %mean of all the estimates
     end
     methods
         % Constructor
@@ -37,6 +36,7 @@ classdef Plotter < handle
                 if distributed_estimation_mode == false
                     C = linspecer(3);
                     obj.scatter_artva = scatter(artva_pos(1), artva_pos(2), 100, C(2, :), '*');
+                    obj.scatter_est_mean
                     hold on
                     obj.scatter_est_artva = scatter(est_artva_pos(1), est_artva_pos(2), 100, C(end, :), '*');
                     obj.scatter_drones = scatter(drones_pos(1, :), drones_pos(2, :), 100, C(1, :), 'o', 'filled');
@@ -49,9 +49,6 @@ classdef Plotter < handle
                     c1 = C(1:2:end, :); % Rows 1, 3,...
                     c2 = C(2:2:end, :); % Rows 2, 4,...
 
-                    est_mean = mean(est_artva_pos,2);
-                    obj.scatter_est_mean = scatter(est_mean(1),est_mean(2),100,'*','black');
-
                     for i=1:n_drones
                         obj.est_labels_handles(i) = text(obj.ax, est_artva_pos(1,i)+dx, est_artva_pos(2,i), num2str(i),'FontSize', 10);
                         obj.drone_labels_handles(i) = text(obj.ax, drones_pos(1,i)+dx, drones_pos(2,i), num2str(i),'FontSize', 10);
@@ -60,8 +57,7 @@ classdef Plotter < handle
                     hold on
                     obj.scatter_est_artva = scatter(est_artva_pos(1,:), est_artva_pos(2,:), 100, c1, '*','HandleVisibility', 'off');
                     obj.scatter_drones = scatter(drones_pos(1, :), drones_pos(2, :), 100, c2, 'o', 'filled','HandleVisibility', 'off');
-                    est_mean = mean(est_artva_pos,2);
-                    obj.scatter_est_mean = scatter(est_mean(1),est_mean(2),100,'*','black');
+                    
                     % Legend
                     %legend('Location','best','AutoUpdate','off');
                 end
@@ -110,19 +106,12 @@ classdef Plotter < handle
                 obj.scatter_drones.YData = drones_pos(2,:);
                 obj.scatter_artva.XData = artva_pos(1);
                 obj.scatter_artva.YData = artva_pos(2);
-
                 if(size(est_artva_pos, 1) == 2)
                     obj.scatter_est_artva.XData = est_artva_pos(1,:);
                     obj.scatter_est_artva.YData = est_artva_pos(2,:);
-                    est_mean = mean(est_artva_pos,2);
-                    obj.scatter_est_mean.XData = est_mean(1);
-                    obj.scatter_est_mean.YData = est_mean(2);
                 elseif(size(est_artva_pos, 1) == 1)
                     obj.scatter_est_artva.XData = est_artva_pos(1);
                     obj.scatter_est_artva.YData = est_artva_pos(2);
-                    est_mean = mean(est_artva_pos,2);
-                    obj.scatter_est_mean.XData = est_mean(1);
-                    obj.scatter_est_mean.YData = est_mean(2);
                 end
 
                 % Set is_text_updated to true to indicate that text is updated

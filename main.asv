@@ -178,24 +178,15 @@ if(~distributed_estimation_mode)
     end
 
 else
-    % The drones stop when their estimate doesn't change with respect to
-    % the mean of the estimates --> convergence
-
-    % Save the values to check when the algorithm is not updating the values anymore
-    if k >= control_steps
-    history_est_artva(1:3,k) =  mean(est_arva_pos,2);
-    last_estimate = history_est_artva(1:3, control_steps);
-    else
-        last_estimate = -1;
-    end
-
+    % The drones stop when their estimate doesn't change with respect to the mean of the estimates.
     for i= 1:drones_num
+        est_arva_pos(:,i)
         if mean(est_arva_pos,2) - est_arva_pos(:,i) < threshold
             check(i,k) = 0;
         end
     end
     sum(check(:))
-    if sum(check(:)) == 0 || norm(history_est_artva(1:3,1) - last_estimate) < threshold
+    if sum(check(:)) == 0
         disp("The estimate of all drones wrt the mean did not change, you have estimated the goal with an accuracy of: " + threshold*100 + " m");
         result = true;
     end
@@ -233,8 +224,7 @@ else
 
     if k >= control_steps
         k = mod(k,control_steps);
-        %history_est_artva = zeros(3*drones_num, control_steps);
-        history_est_artva = zeros(3, control_steps);
+        history_est_artva = zeros(3*drones_num, control_steps);
     end
 end
 end
