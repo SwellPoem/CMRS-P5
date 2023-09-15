@@ -120,9 +120,7 @@ classdef Plotter < handle
                 elseif(size(est_artva_pos, 1) == 1)
                     obj.scatter_est_artva.XData = est_artva_pos(1);
                     obj.scatter_est_artva.YData = est_artva_pos(2);
-                    est_mean = mean(est_artva_pos,2);
-                    obj.scatter_est_mean.XData = est_mean(1);
-                    obj.scatter_est_mean.YData = est_mean(2);
+                    % Nel caso in cui non-distribuito the mean does not exist
                 end
 
                 % Set is_text_updated to true to indicate that text is updated

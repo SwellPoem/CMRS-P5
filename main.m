@@ -10,14 +10,16 @@ import Plotter.*
 show_simulation = true;
 global threshold
 %threshold = 0.00001; % 0.001 m --> 1mm
-threshold = 0.0001; % 0.01 m --> 1cm
-threshold = 0.001; % 0.1 m --> 10cm
+%threshold = 0.0001; % 0.01 m --> 1cm
+%threshold = 0.001; % 0.1 m --> 10 cm
+%threshold = 0.005; % 0.5 m --> 50 cm
+threshold = 0.0060; % 0.6 m --> 60 cm
 global control_time;
 control_time = 2;
 global time_step;
 time_step = 0.01;
 global distributed_estimation_mode;
-distributed_estimation_mode = true;
+distributed_estimation_mode = false;
 global trajectory_type;
 
 trajectory_type = "circ"; % Either "circ","patrol","rect"
@@ -194,7 +196,7 @@ else
             check(i,k) = 0;
         end
     end
-    sum(check(:))
+    %sum(check(:))
     if sum(check(:)) == 0 || norm(history_est_artva(1:3,1) - last_estimate) < threshold
         disp("The estimate of all drones wrt the mean did not change, you have estimated the goal with an accuracy of: " + threshold*100 + " m");
         result = true;

@@ -85,19 +85,19 @@ classdef Drone
                 if(obj.time_trajectory_instant <= obj.time_to_full_speed)
                     if(obj.state ~= "accelerating")
                         obj.state = "accelerating";
-                        obj.printState()
+                        %obj.printState()
                     end
                     sigma = (obj.a_max * obj.time_trajectory_instant^2)/2;
                 elseif(obj.time_trajectory_instant <= obj.time_total - obj.time_to_full_speed)
                     if(obj.state ~= "coasting")
                         obj.state = "coasting";
-                        obj.printState()
+                        %obj.printState()
                     end
                     sigma = obj.v_max * obj.time_trajectory_instant - (obj.v_max^2)/(2 * obj.a_max);
                 else
                     if(obj.state ~= "decelerating")
                         obj.state = "decelerating";
-                        obj.printState()
+                        %obj.printState()
                     end
                     sigma = - (obj.a_max*(obj.time_trajectory_instant - obj.time_total)^2)/2 + obj.v_max * obj.time_total - (obj.v_max^2)/(obj.a_max);
                 end
@@ -105,13 +105,13 @@ classdef Drone
                 if(2 * obj.time_trajectory_instant <= obj.time_total)
                     if(obj.state ~= "accelerating")
                         obj.state = "accelerating";
-                        obj.printState()
+                        %obj.printState()
                     end
                     sigma = (obj.a_max * obj.time_trajectory_instant^2)/2;
                 else
                     if(obj.state ~= "decelerating")
                         obj.state = "decelerating";
-                        obj.printState()
+                        %obj.printState()
                     end
                     sigma = - (obj.a_max*(obj.time_trajectory_instant - obj.time_total)^2)/2 + obj.a_max * (obj.time_total/2)^2;
                 end
@@ -126,10 +126,10 @@ classdef Drone
                            obj.initial_position * (1 - sigma);
 
             if(obj.isAtGoal())
-                disp("Reached goal")
+                %disp("Reached goal")
                 if(obj.state ~= "idle")
                     obj.state = "idle";
-                    obj.printState()
+                    %obj.printState()
                 end
                 return
             end
