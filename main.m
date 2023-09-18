@@ -10,19 +10,19 @@ import Plotter.*
 show_simulation = true;
 global threshold
 %threshold = 0.00001; % 0.001 m --> 1mm
-%threshold = 0.0001; % 0.01 m --> 1cm
+threshold = 0.0001; % 0.01 m --> 1cm
 %threshold = 0.001; % 0.1 m --> 10 cm
 %threshold = 0.005; % 0.5 m --> 50 cm
-threshold = 0.0060; % 0.6 m --> 60 cm
+%threshold = 0.0060; % 0.6 m --> 60 cm
 global control_time;
 control_time = 2;
 global time_step;
 time_step = 0.01;
 global distributed_estimation_mode;
-distributed_estimation_mode = false;
+distributed_estimation_mode = true;
 global trajectory_type;
 
-trajectory_type = "circ"; % Either "circ","patrol","rect"
+trajectory_type = "patrol"; % Either "circ","patrol","rect"
 
 %% Constants
 NONE = -1;
@@ -52,6 +52,7 @@ k = 1;
 % Variables specific to Distributed mode
 est_artva_x_array = zeros(1, drones_num);
 est_artva_y_array = zeros(1, drones_num);
+consensus_mean_array = zeros(2,drones_num);
 sync_delay = 1; % In seconds
 
 
@@ -109,6 +110,10 @@ while true
             drones_list{i} = drones_list{i}.estimate(artva);
             est_artva_x_array(i) = drones_list{i}.est_pos(1);
             est_artva_y_array(i) = drones_list{i}.est_pos(2);
+            
+            % Ace filter
+            drones_list{i} = drones_list{i}.ace(drones_list);
+            consensus_mean_array(:,i) = drones_list{i}.z_new;
 
         end
 
@@ -128,7 +133,7 @@ while true
         if(~distributed_estimation_mode)
             p.draw([drones_x_array; drones_y_array], artva.position, est_artva.position);
         else
-            p.draw([drones_x_array; drones_y_array], artva.position, [est_artva_x_array; est_artva_y_array]);
+            p.draw([drones_x_array; drones_y_array], artva.position, [est_artva_x_array; est_artva_y_array],consensus_mean_array);
         end
         pause(time_step)
     end

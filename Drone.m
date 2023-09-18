@@ -21,6 +21,12 @@ classdef Drone
         time_to_full_speed
         time_total
         trajectory_length
+
+        % Average estimation : z is the average estimated through consensus and w is its integration of it
+        z_new
+        z_old
+        w_new
+        w_old
     end
     methods
         % Constructor
@@ -50,6 +56,13 @@ classdef Drone
                 obj.a_max = 0.01; % 1 m/s
                 obj.time_to_full_speed = obj.v_max / obj.a_max;
                 obj.trajectory_length = -1;
+
+                % ACE
+                obj.z_new = zeros(2,1);
+                obj.z_old = zeros(2,1);
+                obj.w_new = zeros(2,1);
+                obj.w_old = zeros(2,1);
+
             end
         end
 
@@ -168,6 +181,62 @@ classdef Drone
             obj.est_pos(2) = obj.est_X(8);
             obj.est_pos(3) = obj.est_X(9);
         end
+
+        % PI AVERAGE CONSENSUS ESTIMATOR
+        function obj = ace(obj, drones_list)
+            gamma = 0.5;
+            Kp = 10;
+            Ki = 3;
+            delta = 0.01;
+
+            %stima = obj.est_pos(1:2,:); cosi mi convergono ai valori delle stime 
+            % vediamo se metto i valori della media che cosa succede, converge ai volori delle medie singole non del totale 
+            
+
+            prev_id = obj.id-1;
+            next_id = obj.id+1;
+
+            if(prev_id >= 1)
+                z_old_prev = drones_list{prev_id}.z_old;
+                w_old_prev = drones_list{prev_id}.w_old;
+                stima_prev = drones_list{prev_id}.est_pos(1:2,:);
+            end
+            
+            if(next_id <= size(drones_list, 2))
+                z_old_next = drones_list{next_id}.z_old;
+                w_old_next = drones_list{next_id}.w_old;
+                stima_next = drones_list{next_id}.est_pos(1:2,:);
+            end 
+
+            % This works only with our particular topology
+            % 3 casi : id =1; mezzo, id = finale
+            if obj.id == 1
+                stima = mean([obj.est_pos(1:2,:),stima_next],2);
+                z_dot = gamma*(stima-obj.z_old) - Kp*(obj.z_old - z_old_next) + Ki*(obj.w_old-w_old_next);
+                w_dot = -Ki*(obj.z_old-z_old_next);
+            end
+
+            if obj.id > 1 && obj.id < size(drones_list, 2)
+                stima = mean([obj.est_pos(1:2,:),stima_prev,stima_next],2);
+                z_dot = gamma*(stima-obj.z_old) - Kp*((obj.z_old - z_old_prev) + (obj.z_old - z_old_next)) + Ki*((obj.w_old-w_old_prev) + (obj.w_old-w_old_next));
+                w_dot = -Ki*((obj.z_old-z_old_prev) + (obj.z_old-z_old_next));
+            end
+
+            if obj.id == size(drones_list, 2)
+                stima = mean([obj.est_pos(1:2,:),stima_prev],2);
+                z_dot = gamma*(stima-obj.z_old) - Kp*(obj.z_old-z_old_prev) + Ki*(obj.w_old-w_old_prev);
+                w_dot = -Ki*(obj.z_old-z_old_prev);
+            end
+            
+            % Integrazione di Eulero
+            obj.z_new = obj.z_old + delta*z_dot;
+            obj.w_new =obj.w_old + delta*w_dot;
+
+            % metti quello nuovo in quello vecchio per la prossima iterazione 
+            obj.z_old = obj.z_new;
+            obj.w_old = obj.z_new;
+
+        end 
         
     end
 end

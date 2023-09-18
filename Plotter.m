@@ -10,6 +10,7 @@ classdef Plotter < handle
         drone_labels_handles % New property to store the handles of drone text labels
         is_text_updated % New property to track if text is updated
         scatter_est_mean %mean of all the estimates
+        scatter_consensus_mean % mean calculated with consensus by each drone
     end
     methods
         % Constructor
@@ -20,13 +21,14 @@ classdef Plotter < handle
             obj.scatter_artva = -1;
             obj.scatter_est_artva = -1;
             obj.scatter_est_mean = -1;
+            obj.scatter_consensus_mean = -1;
             obj.ax = -1;
             obj.est_labels_handles = gobjects(1, 0); % Initialize as an empty array
             obj.drone_labels_handles = gobjects(1, 0); % Initialize as an empty array
             obj.is_text_updated = false; % Initialize to false
         end
 
-        function obj = draw(obj, drones_pos, artva_pos, est_artva_pos)
+        function obj = draw(obj, drones_pos, artva_pos, est_artva_pos,consensus_mean_array)
             global trajectory_type;
             global distributed_estimation_mode;
             n_drones = size(drones_pos, 2);
@@ -62,6 +64,8 @@ classdef Plotter < handle
                     obj.scatter_drones = scatter(drones_pos(1, :), drones_pos(2, :), 100, c2, 'o', 'filled','HandleVisibility', 'off');
                     est_mean = mean(est_artva_pos,2);
                     obj.scatter_est_mean = scatter(est_mean(1),est_mean(2),100,'*','black');
+                    % TODO cambiare colori (maybe) e mettere che magari le stime non si vedono 
+                    obj.scatter_consensus_mean = scatter(consensus_mean_array(1,:),consensus_mean_array(2,:),100,c2,'diamond','filled');
                     % Legend
                     %legend('Location','best','AutoUpdate','off');
                 end
@@ -117,6 +121,8 @@ classdef Plotter < handle
                     est_mean = mean(est_artva_pos,2);
                     obj.scatter_est_mean.XData = est_mean(1);
                     obj.scatter_est_mean.YData = est_mean(2);
+                    obj.scatter_consensus_mean.XData = consensus_mean_array(1,:);
+                    obj.scatter_consensus_mean.YData = consensus_mean_array(2,:);
                 elseif(size(est_artva_pos, 1) == 1)
                     obj.scatter_est_artva.XData = est_artva_pos(1);
                     obj.scatter_est_artva.YData = est_artva_pos(2);
