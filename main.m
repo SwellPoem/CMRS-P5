@@ -10,8 +10,8 @@ import Plotter.*
 show_simulation = true;
 global threshold
 %threshold = 0.00001; % 0.001 m --> 1mm
-threshold = 0.0001; % 0.01 m --> 1cm
-%threshold = 0.001; % 0.1 m --> 10 cm
+%threshold = 0.0001; % 0.01 m --> 1cm
+threshold = 0.001; % 0.1 m --> 10 cm
 %threshold = 0.005; % 0.5 m --> 50 cm
 %threshold = 0.0060; % 0.6 m --> 60 cm
 global control_time;
@@ -22,7 +22,7 @@ global distributed_estimation_mode;
 distributed_estimation_mode = true;
 global trajectory_type;
 
-trajectory_type = "patrol"; % Either "circ","patrol","rect"
+trajectory_type = "circ"; % Either "circ","patrol","rect"
 
 %% Constants
 NONE = -1;

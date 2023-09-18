@@ -184,49 +184,48 @@ classdef Drone
 
         % PI AVERAGE CONSENSUS ESTIMATOR
         function obj = ace(obj, drones_list)
-            gamma = 0.5;
+            gamma = 0.7;
             Kp = 10;
             Ki = 3;
-            delta = 0.01;
+            delta = 0.01; %così è uguale al time step
 
             %stima = obj.est_pos(1:2,:); cosi mi convergono ai valori delle stime 
             % vediamo se metto i valori della media che cosa succede, converge ai volori delle medie singole non del totale 
             
-
             prev_id = obj.id-1;
             next_id = obj.id+1;
 
-            if(prev_id >= 1)
+            % Topologia dove 1 e ultimo (droni) comunicano
+            if(obj.id > 1 && obj.id < size(drones_list, 2))
                 z_old_prev = drones_list{prev_id}.z_old;
                 w_old_prev = drones_list{prev_id}.w_old;
                 stima_prev = drones_list{prev_id}.est_pos(1:2,:);
-            end
-            
-            if(next_id <= size(drones_list, 2))
                 z_old_next = drones_list{next_id}.z_old;
                 w_old_next = drones_list{next_id}.w_old;
                 stima_next = drones_list{next_id}.est_pos(1:2,:);
-            end 
-
-            % This works only with our particular topology
-            % 3 casi : id =1; mezzo, id = finale
-            if obj.id == 1
-                stima = mean([obj.est_pos(1:2,:),stima_next],2);
-                z_dot = gamma*(stima-obj.z_old) - Kp*(obj.z_old - z_old_next) + Ki*(obj.w_old-w_old_next);
-                w_dot = -Ki*(obj.z_old-z_old_next);
+            end
+            if(obj.id == 1)
+                prev_id = size(drones_list, 2);
+                z_old_prev = drones_list{prev_id}.z_old;
+                w_old_prev = drones_list{prev_id}.w_old;
+                stima_prev = drones_list{prev_id}.est_pos(1:2,:);
+                z_old_next = drones_list{next_id}.z_old;
+                w_old_next = drones_list{next_id}.w_old;
+                stima_next = drones_list{next_id}.est_pos(1:2,:);
+            end
+            if(obj.id == size(drones_list, 2))
+                next_id = 1;
+                z_old_prev = drones_list{prev_id}.z_old;
+                w_old_prev = drones_list{prev_id}.w_old;
+                stima_prev = drones_list{prev_id}.est_pos(1:2,:);
+                z_old_next = drones_list{next_id}.z_old;
+                w_old_next = drones_list{next_id}.w_old;
+                stima_next = drones_list{next_id}.est_pos(1:2,:);
             end
 
-            if obj.id > 1 && obj.id < size(drones_list, 2)
-                stima = mean([obj.est_pos(1:2,:),stima_prev,stima_next],2);
-                z_dot = gamma*(stima-obj.z_old) - Kp*((obj.z_old - z_old_prev) + (obj.z_old - z_old_next)) + Ki*((obj.w_old-w_old_prev) + (obj.w_old-w_old_next));
-                w_dot = -Ki*((obj.z_old-z_old_prev) + (obj.z_old-z_old_next));
-            end
-
-            if obj.id == size(drones_list, 2)
-                stima = mean([obj.est_pos(1:2,:),stima_prev],2);
-                z_dot = gamma*(stima-obj.z_old) - Kp*(obj.z_old-z_old_prev) + Ki*(obj.w_old-w_old_prev);
-                w_dot = -Ki*(obj.z_old-z_old_prev);
-            end
+            stima = mean([obj.est_pos(1:2,:),stima_prev,stima_next],2);
+            z_dot = gamma*(stima-obj.z_old) - Kp*((obj.z_old - z_old_prev) + (obj.z_old - z_old_next)) + Ki*((obj.w_old-w_old_prev) + (obj.w_old-w_old_next));
+            w_dot = -Ki*((obj.z_old-z_old_prev) + (obj.z_old-z_old_next));
             
             % Integrazione di Eulero
             obj.z_new = obj.z_old + delta*z_dot;
