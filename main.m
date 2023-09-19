@@ -1,4 +1,4 @@
-clear all
+clear all;
 close all;  % Close all open figure windows
 clc
 
@@ -8,21 +8,23 @@ import Plotter.*
 
 %% CHOSEN Variables
 show_simulation = true;
-global threshold
+global threshold;
 %threshold = 0.00001; % 0.001 m --> 1mm
 %threshold = 0.0001; % 0.01 m --> 1cm
-threshold = 0.001; % 0.1 m --> 10 cm
+%threshold = 0.001; % 0.1 m --> 10 cm
 %threshold = 0.005; % 0.5 m --> 50 cm
-%threshold = 0.0060; % 0.6 m --> 60 cm
+threshold = 0.0060; % 0.6 m --> 60 cm
 global control_time;
 control_time = 2;
 global time_step;
 time_step = 0.01;
 global distributed_estimation_mode;
 distributed_estimation_mode = true;
+global dronesSetted;
+dronesSetted = false;
 global trajectory_type;
 
-trajectory_type = "circ"; % Either "circ","patrol","rect"
+trajectory_type = "rect"; % Either "circ","patrol","rect"
 
 %% Constants
 NONE = -1;
@@ -87,7 +89,7 @@ while true
         [result,check,k] = stopping_criterium([est_X(7), est_X(8), est_X(9)]',check,k);
 
         if result
-            break
+            break;
         end
 
     else
@@ -120,7 +122,7 @@ while true
         [result,check,k] = stopping_criterium([est_artva_x_array;est_artva_y_array;zeros(1,drones_num)],check,k);
 
         if result
-            break
+            break;
         end
 
     end
@@ -154,6 +156,9 @@ global control_steps;
 global drones_num;
 global majority;
 global control_time;
+global dronesSetted;
+global trajectory_type;
+
 
 if(~distributed_estimation_mode)
     % Save the values to check when the algorithm is not updating the values anymore
@@ -196,11 +201,24 @@ else
         last_estimate = -1;
     end
 
-    for i= 1:drones_num
-        if mean(est_arva_pos,2) - est_arva_pos(:,i) < threshold
-            check(i,k) = 0;
+    if (trajectory_type == "rect" && dronesSetted)
+        for i= 1:drones_num
+            if mean(est_arva_pos,2) - est_arva_pos(:,i) < threshold
+                check(i,k) = 0;
+            end
         end
     end
+
+    if(trajectory_type == "circ" || trajectory_type == "patrol")
+        for i= 1:drones_num
+            if mean(est_arva_pos,2) - est_arva_pos(:,i) < threshold
+                check(i,k) = 0;
+            else
+                check(i,k) = 1;
+            end
+        end
+    end
+
     %sum(check(:))
     if sum(check(:)) == 0 || norm(history_est_artva(1:3,1) - last_estimate) < threshold
         disp("The estimate of all drones wrt the mean did not change, you have estimated the goal with an accuracy of: " + threshold*100 + " m");
@@ -322,8 +340,9 @@ disp("Setup completed!")
 end
 
 function new_drones_list = replan(drones_list, drones_num, est_artva_pos)
-global trajectory_type
-global distributed_estimation_mode
+global trajectory_type;
+global dronesSetted;
+global distributed_estimation_mode;
 if trajectory_type == "rect"
     for i = 1:drones_num
         if(drones_list{i}.state ~= "idle" || ~drones_list{i}.isAtGoal())
@@ -332,6 +351,7 @@ if trajectory_type == "rect"
         end
     end
     disp("Replanning!")
+    dronesSetted = true;
     new_drones_list = cell([1, drones_num]);
     for i = 1:drones_num
         current_drone = drones_list{i};
