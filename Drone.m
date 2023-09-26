@@ -223,8 +223,8 @@ classdef Drone
                 stima_next = drones_list{next_id}.est_pos(1:2,:);
             end
 
-            stima = mean([obj.est_pos(1:2,:),stima_prev,stima_next],2);
-            z_dot = gamma*(stima-obj.z_old) - Kp*((obj.z_old - z_old_prev) + (obj.z_old - z_old_next)) + Ki*((obj.w_old-w_old_prev) + (obj.w_old-w_old_next));
+            setpoint = mean([obj.est_pos(1:2,:),stima_prev,stima_next],2);
+            z_dot = gamma*(setpoint-obj.z_old) - Kp*((obj.z_old - z_old_prev) + (obj.z_old - z_old_next)) + Ki*((obj.w_old-w_old_prev) + (obj.w_old-w_old_next));
             w_dot = -Ki*((obj.z_old-z_old_prev) + (obj.z_old-z_old_next));
             
             % Integrazione di Eulero
