@@ -33,6 +33,7 @@ classdef Plotter < handle
         function obj = draw(obj, drones_pos, artva_pos, est_artva_pos,time_instant,consensus_mean_array)
             global trajectory_type;
             global distributed_estimation_mode;
+            global see_text;
             n_drones = size(drones_pos, 2);
             dx = 0.025;
             
@@ -42,7 +43,7 @@ classdef Plotter < handle
                     C = linspecer(3);
                     obj.scatter_artva = scatter(artva_pos(1), artva_pos(2), 100, C(2, :), '*');
                     hold on
-                    obj.scatter_est_artva = scatter(est_artva_pos(1), est_artva_pos(2), 100, C(end, :), '*');
+                    obj.scatter_est_artva = scatter(est_artva_pos(1), est_artva_pos(2), 100, C(3, :), '*');
                     obj.scatter_drones = scatter(drones_pos(1, :), drones_pos(2, :), 100, C(1, :), 'o', 'filled');
                     % Legend
                     %legend('true position', 'estimated position', 'drones position', 'Location', 'NorthEast','AutoUpdate','off');
@@ -90,7 +91,6 @@ classdef Plotter < handle
                     end     
                 elseif trajectory_type == "patrol"
                     % draw a circle centered on the bottom left corner and with radius 1
-                    global angles;
                     obj.ax.XLim = [0 1];
                     obj.ax.YLim = [0 1];
                     viscircles([0, 0], 1, 'LineStyle', '--', 'EdgeColor', 'black');
@@ -122,14 +122,16 @@ classdef Plotter < handle
                     % Nel caso in cui non-distribuito the mean does not exist
                 end
                 if distributed_estimation_mode == true
-                    % Add the text to the drones, nell altro caso non serve 
-                    for i=1:n_drones
-                        % Delete previous text labels
-                         %delete(obj.est_labels_handles(i));
-                         %delete(obj.drone_labels_handles(i));
-                         %obj.est_labels_handles(i) = text(obj.ax, est_artva_pos(1,i)+dx, est_artva_pos(2,i), num2str(i),'FontSize', 10);
-                         %obj.drone_labels_handles(i) = text(obj.ax, drones_pos(1,i)+dx, drones_pos(2,i), num2str(i),'FontSize', 10);
-                    end
+                    if see_text == true
+                        % Add the text to the drones, nell altro caso non serve 
+                        for i=1:n_drones
+                            % Delete previous text labels
+                            delete(obj.est_labels_handles(i));
+                            delete(obj.drone_labels_handles(i));
+                            obj.est_labels_handles(i) = text(obj.ax, est_artva_pos(1,i)+dx, est_artva_pos(2,i), num2str(i),'FontSize', 10);
+                            obj.drone_labels_handles(i) = text(obj.ax, drones_pos(1,i)+dx, drones_pos(2,i), num2str(i),'FontSize', 10);
+                        end
+                    end 
                     % Set is_text_updated to true to indicate that text is updated
                     obj.is_text_updated = true;
                 end 

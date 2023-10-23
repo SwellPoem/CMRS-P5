@@ -233,7 +233,7 @@ classdef Drone
 
             % metti quello nuovo in quello vecchio per la prossima iterazione 
             obj.z_old = obj.z_new;
-            obj.w_old = obj.z_new;
+            obj.w_old = obj.z_new;         
 
         end 
         

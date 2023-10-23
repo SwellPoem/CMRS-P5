@@ -1,4 +1,4 @@
-clear all; close all; clc  
+clear; close all; clc  
 import Drone.*
 import Artva.*
 import Plotter.*
@@ -7,7 +7,7 @@ import Plotter.*
 show_simulation = true;
 control_time = 1;
 global threshold;
-threshold = 0.00005; % 0.001 m --> 1mm
+%threshold = 0.00005; % 0.001 m --> 1mm
 threshold = 0.0001; %--> 1cm per il caso distribuito
 global time_step;
 time_step = 0.01;
@@ -17,6 +17,8 @@ global dronesSetted;
 dronesSetted = false;
 global trajectory_type;
 trajectory_type = "circ"; % Either "circ","patrol","rect"
+global see_text;
+see_text = false;
 
 %% Constants
 NONE = -1;
@@ -134,7 +136,7 @@ result = false;
 global threshold;
 global control_steps;
 global last_estimate;
-sum(check(1,:),'all')
+%sum(check(1,:),'all')
 % If for consecutives times the check is always true then stop the simulation
 if sum(check(1,:),'all') == 0 && (norm(history_var(:,1) - history_var(:,control_steps)) < threshold)
     result = true;
