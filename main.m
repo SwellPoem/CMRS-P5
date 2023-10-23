@@ -117,9 +117,9 @@ while true
 
     if(show_simulation)
         if(~distributed_estimation_mode)
-            p.draw([drones_x_array; drones_y_array], artva.position, est_artva.position);
+            p.draw([drones_x_array; drones_y_array], artva.position, est_artva.position, time_instant);
         else
-            p.draw([drones_x_array; drones_y_array], artva.position, [est_artva_x_array; est_artva_y_array],consensus_mean_array);
+            p.draw([drones_x_array; drones_y_array], artva.position, [est_artva_x_array; est_artva_y_array],time_instant,consensus_mean_array);
         end
         pause(time_step)
     end

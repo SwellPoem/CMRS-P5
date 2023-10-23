@@ -9,8 +9,9 @@ classdef Plotter < handle
         est_labels_handles % New property to store the handles of estimate text labels
         drone_labels_handles % New property to store the handles of drone text labels
         is_text_updated % New property to track if text is updated
-        scatter_est_mean %mean of all the estimates
+        scatter_est_mean % mean of all the estimates
         scatter_consensus_mean % mean calculated with consensus by each drone
+        th % title
     end
     methods
         % Constructor
@@ -26,9 +27,10 @@ classdef Plotter < handle
             obj.est_labels_handles = gobjects(1, 0); % Initialize as an empty array
             obj.drone_labels_handles = gobjects(1, 0); % Initialize as an empty array
             obj.is_text_updated = false; % Initialize to false
+            obj.th = title('Title');
         end
 
-        function obj = draw(obj, drones_pos, artva_pos, est_artva_pos,consensus_mean_array)
+        function obj = draw(obj, drones_pos, artva_pos, est_artva_pos,time_instant,consensus_mean_array)
             global trajectory_type;
             global distributed_estimation_mode;
             n_drones = size(drones_pos, 2);
@@ -100,21 +102,12 @@ classdef Plotter < handle
                 obj.is_initialized = true;
                 hold off
             else
-                if distributed_estimation_mode == true
-                    % Add the text to the drones
-                    for i=1:n_drones
-                        % Delete previous text labels
-                         delete(obj.est_labels_handles(i));
-                         delete(obj.drone_labels_handles(i));
-                         obj.est_labels_handles(i) = text(obj.ax, est_artva_pos(1,i)+dx, est_artva_pos(2,i), num2str(i),'FontSize', 10);
-                         obj.drone_labels_handles(i) = text(obj.ax, drones_pos(1,i)+dx, drones_pos(2,i), num2str(i),'FontSize', 10);
-                    end
-                end
+                titleString = sprintf('Simulation Time: %0.2f sec', time_instant);
+                obj.th = title(obj.ax, titleString);
                 obj.scatter_drones.XData = drones_pos(1,:);
                 obj.scatter_drones.YData = drones_pos(2,:);
                 obj.scatter_artva.XData = artva_pos(1);
                 obj.scatter_artva.YData = artva_pos(2);
-
                 if(size(est_artva_pos, 1) == 2)
                     obj.scatter_est_artva.XData = est_artva_pos(1,:);
                     obj.scatter_est_artva.YData = est_artva_pos(2,:);
@@ -128,9 +121,18 @@ classdef Plotter < handle
                     obj.scatter_est_artva.YData = est_artva_pos(2);
                     % Nel caso in cui non-distribuito the mean does not exist
                 end
-
-                % Set is_text_updated to true to indicate that text is updated
-                obj.is_text_updated = true;
+                if distributed_estimation_mode == true
+                    % Add the text to the drones, nell altro caso non serve 
+                    for i=1:n_drones
+                        % Delete previous text labels
+                         %delete(obj.est_labels_handles(i));
+                         %delete(obj.drone_labels_handles(i));
+                         %obj.est_labels_handles(i) = text(obj.ax, est_artva_pos(1,i)+dx, est_artva_pos(2,i), num2str(i),'FontSize', 10);
+                         %obj.drone_labels_handles(i) = text(obj.ax, drones_pos(1,i)+dx, drones_pos(2,i), num2str(i),'FontSize', 10);
+                    end
+                    % Set is_text_updated to true to indicate that text is updated
+                    obj.is_text_updated = true;
+                end 
             end
 
         end
