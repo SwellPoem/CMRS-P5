@@ -34,6 +34,7 @@ classdef Plotter < handle
             global trajectory_type;
             global distributed_estimation_mode;
             global see_text;
+            global angles;
             n_drones = size(drones_pos, 2);
             dx = 0.025;
             
@@ -81,7 +82,6 @@ classdef Plotter < handle
                         line([(i-1/2)/n_drones, (i-1/2)/n_drones], [0, 1], 'LineStyle', '--', 'Color', 'black', 'HandleVisibility', 'off')
                     end
                 elseif trajectory_type == "circ"
-                    global angles;
                     obj.ax.XLim = [-1 1];
                     obj.ax.YLim = [-1 1];
                     viscircles([0, 0], 1, 'LineStyle', '--', 'EdgeColor', 'black');

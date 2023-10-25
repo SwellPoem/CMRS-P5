@@ -5,25 +5,25 @@ import Plotter.*
 
 %% CHOSEN Variables
 show_simulation = true;
-control_time = 1;
+control_time = 4; %2 for the centralized mode, 1 for the distributed 
 global threshold;
 %threshold = 0.00005; % 0.001 m --> 1mm
-threshold = 0.0001; %--> 1cm per il caso distribuito
+threshold = 0.0001; %--> 1cm 
 global time_step;
 time_step = 0.01;
 global distributed_estimation_mode;
-distributed_estimation_mode = true;
+distributed_estimation_mode = false ;
 global dronesSetted;
 dronesSetted = false;
 global trajectory_type;
-trajectory_type = "circ"; % Either "circ","patrol","rect"
+trajectory_type = "patrol"; % Either "circ","patrol","rect"
 global see_text;
 see_text = false;
+global drones_num;
+drones_num = 9;
 
 %% Constants
 NONE = -1;
-global drones_num;
-drones_num = 6;
 drones_list = NONE;
 drones_x_array = zeros(1, drones_num);
 drones_y_array = zeros(1, drones_num);
@@ -58,6 +58,7 @@ end
 
 %% Simulation loop
 while true
+    tic %start counting
 
     if(~distributed_estimation_mode)
         drones_list = replan(drones_list, drones_num, est_artva.position);
@@ -79,6 +80,9 @@ while true
         if result
             disp("The value of the estimate did not change by " + threshold*100 + " m for more than "+ control_time + "s")
             disp("You have estimated the goal with an accuracy of: " + norm(artva.position - est_artva.position) + " m");
+            disp("Simulation stopped at: " + time_instant + " seconds" )
+            disp("Goal position:" )
+            artva.position
             break;
         end
 
@@ -123,7 +127,8 @@ while true
         else
             p.draw([drones_x_array; drones_y_array], artva.position, [est_artva_x_array; est_artva_y_array],time_instant,consensus_mean_array);
         end
-        pause(time_step)
+        elapsed_time = toc;
+        pause(time_step-elapsed_time) %I take out the computational time so that it acually pauses for only one millisecond 
     end
     time_instant = time_instant + time_step;
 end
@@ -203,6 +208,7 @@ elseif trajectory_type == "circ"
         end
     end
     artva = Artva([-1 + 2 * rand,-1 + 2 * rand,0]); %random value between -1 and 1
+    %artva = Artva([0.9,0.9, 0]);
 
 elseif trajectory_type == "patrol"
     global angles;
@@ -239,6 +245,7 @@ elseif trajectory_type == "patrol"
     drones_list{drones_num} = drones_list{drones_num}.setGoal([0, 1, 0]);
 
     artva = Artva([rand, rand, 0]);
+    %artva = Artva([0.5,0.5, 0]);
 
 end
 
