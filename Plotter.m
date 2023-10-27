@@ -8,6 +8,7 @@ classdef Plotter < handle
         ax
         est_labels_handles % New property to store the handles of estimate text labels
         drone_labels_handles % New property to store the handles of drone text labels
+        averages_labels_handles
         is_text_updated % New property to track if text is updated
         scatter_est_mean % mean of all the estimates
         scatter_consensus_mean % mean calculated with consensus by each drone
@@ -26,6 +27,7 @@ classdef Plotter < handle
             obj.ax = -1;
             obj.est_labels_handles = gobjects(1, 0); % Initialize as an empty array
             obj.drone_labels_handles = gobjects(1, 0); % Initialize as an empty array
+            obj.averages_labels_handles = gobjects(1, 0);
             obj.is_text_updated = false; % Initialize to false
             obj.th = title('Title');
         end
@@ -36,7 +38,7 @@ classdef Plotter < handle
             global see_text;
             global angles;
             n_drones = size(drones_pos, 2);
-            dx = 0.025;
+            dx = 0.01;
             
             if (~obj.is_initialized)
                 % Generate colors for plot
@@ -57,10 +59,12 @@ classdef Plotter < handle
 
                     est_mean = mean(est_artva_pos,2);
                     obj.scatter_est_mean = scatter(est_mean(1),est_mean(2),100,'*','black');
-
-                    for i=1:n_drones
-                        obj.est_labels_handles(i) = text(obj.ax, est_artva_pos(1,i)+dx, est_artva_pos(2,i), num2str(i),'FontSize', 10);
-                        obj.drone_labels_handles(i) = text(obj.ax, drones_pos(1,i)+dx, drones_pos(2,i), num2str(i),'FontSize', 10);
+                    if see_text == true
+                        for i=1:n_drones
+                            obj.est_labels_handles(i) = text(obj.ax, est_artva_pos(1,i)+dx, est_artva_pos(2,i), num2str(i),'FontSize', 10);
+                            obj.drone_labels_handles(i) = text(obj.ax, drones_pos(1,i)+dx, drones_pos(2,i), num2str(i),'FontSize', 10);
+                            %obj.averages_labels_handles(i) = text(obj.ax, consensus_mean_array(1,i)+dx, consensus_mean_array(2,i), num2str(i),'FontSize', 10);
+                        end
                     end
                     obj.scatter_artva = scatter(artva_pos(1), artva_pos(2), 100,'*','red','DisplayName','true position');
                     hold on
@@ -121,20 +125,21 @@ classdef Plotter < handle
                     obj.scatter_est_artva.YData = est_artva_pos(2);
                     % Nel caso in cui non-distribuito the mean does not exist
                 end
-                if distributed_estimation_mode == true
-                    if see_text == true
+                %%% RICORDATI CHE DEVI SCOMMENTARE ANCHE LA PARTE SOPRA SE VUOI IL TESTO ANCHE PER LE MEDIE
+                    if see_text == true && distributed_estimation_mode == true
                         % Add the text to the drones, nell altro caso non serve 
                         for i=1:n_drones
                             % Delete previous text labels
                             delete(obj.est_labels_handles(i));
                             delete(obj.drone_labels_handles(i));
+                            %delete(obj.averages_labels_handles(i));
                             obj.est_labels_handles(i) = text(obj.ax, est_artva_pos(1,i)+dx, est_artva_pos(2,i), num2str(i),'FontSize', 10);
                             obj.drone_labels_handles(i) = text(obj.ax, drones_pos(1,i)+dx, drones_pos(2,i), num2str(i),'FontSize', 10);
+                            %obj.averages_labels_handles(i) = text(obj.ax, consensus_mean_array(1,i)+dx, consensus_mean_array(2,i), num2str(i),'FontSize', 10);
                         end
+                        % Set is_text_updated to true to indicate that text is updated
+                        obj.is_text_updated = true;
                     end 
-                    % Set is_text_updated to true to indicate that text is updated
-                    obj.is_text_updated = true;
-                end 
             end
 
         end

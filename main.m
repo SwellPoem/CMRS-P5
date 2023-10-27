@@ -5,22 +5,22 @@ import Plotter.*
 
 %% CHOSEN Variables
 show_simulation = true;
-control_time = 4; %2 for the centralized mode, 1 for the distributed 
+control_time = 2; %2 for the centralized mode, 1 for the distributed 
 global threshold;
 %threshold = 0.00005; % 0.001 m --> 1mm
 threshold = 0.0001; %--> 1cm 
 global time_step;
 time_step = 0.01;
 global distributed_estimation_mode;
-distributed_estimation_mode = false ;
+distributed_estimation_mode = true;
 global dronesSetted;
 dronesSetted = false;
 global trajectory_type;
-trajectory_type = "patrol"; % Either "circ","patrol","rect"
+trajectory_type = "rect"; % Either "circ","patrol","rect"
 global see_text;
-see_text = false;
+see_text = true;
 global drones_num;
-drones_num = 9;
+drones_num = 3;
 
 %% Constants
 NONE = -1;
@@ -80,8 +80,8 @@ while true
         if result
             disp("The value of the estimate did not change by " + threshold*100 + " m for more than "+ control_time + "s")
             disp("You have estimated the goal with an accuracy of: " + norm(artva.position - est_artva.position) + " m");
-            disp("Simulation stopped at: " + time_instant + " seconds" )
-            disp("Goal position:" )
+            disp("Simulation stopped at: " + time_instant + " seconds" );
+            disp("Goal position:" );
             artva.position
             break;
         end
@@ -112,6 +112,9 @@ while true
             if result
                 disp("The value of the estimate did not change by " + threshold*100 + " m for more than " + control_time + "s")
                 disp("You have estimated the goal with an accuracy of: " + norm(artva.position - [history_var(:,k);0]) + "m");
+                disp("Simulation stopped at: " + time_instant + " seconds" );
+                disp("Goal position:" );
+                artva.position
                 break;
             end
         end
@@ -128,7 +131,7 @@ while true
             p.draw([drones_x_array; drones_y_array], artva.position, [est_artva_x_array; est_artva_y_array],time_instant,consensus_mean_array);
         end
         elapsed_time = toc;
-        pause(time_step-elapsed_time) %I take out the computational time so that it acually pauses for only one millisecond 
+        pause(max(0,time_step-elapsed_time)) %I take out the computational time so that it acually pauses for only one millisecond 
     end
     time_instant = time_instant + time_step;
 end
@@ -186,7 +189,8 @@ if trajectory_type == "rect"
         drones_list{i} = Drone(i, [0, 0, 0]);
         drones_list{i} = drones_list{i}.setGoal([(i-1/2)/drones_num, 0, 0]);
     end
-    artva = Artva([rand, rand, 0]);
+    %artva = Artva([rand, rand, 0]);
+    artva = Artva([0.9, 0.9, 0]);
 
 elseif trajectory_type == "circ"
     global angles;
@@ -244,8 +248,8 @@ elseif trajectory_type == "patrol"
     % movement of the last drone on the y axis towards the top left corner
     drones_list{drones_num} = drones_list{drones_num}.setGoal([0, 1, 0]);
 
-    artva = Artva([rand, rand, 0]);
-    %artva = Artva([0.5,0.5, 0]);
+    %artva = Artva([rand, rand, 0]);
+    artva = Artva([0.1,0.1, 0]);
 
 end
 
