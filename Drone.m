@@ -150,31 +150,43 @@ classdef Drone
         end
 
         function obj = sync(obj, drones_list)
-            
-            % Update est_H and est_Y
+            global trajectory_type;
             prev_id = obj.id-1;
             next_id = obj.id+1;
-            if(obj.id > 1 && obj.id < size(drones_list, 2))
-                obj.est_H(:, prev_id) = drones_list{prev_id}.est_H(:, prev_id);
-                obj.est_Y(prev_id) = drones_list{prev_id}.est_Y(prev_id);
-                obj.est_H(:, next_id) = drones_list{next_id}.est_H(:, next_id);
-                obj.est_Y(next_id) = drones_list{next_id}.est_Y(next_id);
+            if trajectory_type == "circ" || trajectory_type == "patrol"
+                % Update est_H and est_Y
+                if(obj.id > 1 && obj.id < size(drones_list, 2))
+                    obj.est_H(:, prev_id) = drones_list{prev_id}.est_H(:, prev_id);
+                    obj.est_Y(prev_id) = drones_list{prev_id}.est_Y(prev_id);
+                    obj.est_H(:, next_id) = drones_list{next_id}.est_H(:, next_id);
+                    obj.est_Y(next_id) = drones_list{next_id}.est_Y(next_id);
+                end
+                if(obj.id == 1)
+                    prev_id = size(drones_list, 2);
+                    obj.est_H(:, prev_id) = drones_list{prev_id}.est_H(:, prev_id);
+                    obj.est_Y(prev_id) = drones_list{prev_id}.est_Y(prev_id);
+                    obj.est_H(:, next_id) = drones_list{next_id}.est_H(:, next_id);
+                    obj.est_Y(next_id) = drones_list{next_id}.est_Y(next_id);
+                end
+                if(obj.id == size(drones_list, 2))
+                    next_id = 1;
+                    obj.est_H(:, prev_id) = drones_list{prev_id}.est_H(:, prev_id);
+                    obj.est_Y(prev_id) = drones_list{prev_id}.est_Y(prev_id);
+                    obj.est_H(:, next_id) = drones_list{next_id}.est_H(:, next_id);
+                    obj.est_Y(next_id) = drones_list{next_id}.est_Y(next_id);
+                end
+            elseif trajectory_type == "rect"
+                if(prev_id >= 1)
+                    obj.est_H(:, prev_id) = drones_list{prev_id}.est_H(:, prev_id);
+                    obj.est_Y(prev_id) = drones_list{prev_id}.est_Y(prev_id);
+                end
+                if(next_id <= size(drones_list, 2))
+                    obj.est_H(:, next_id) = drones_list{next_id}.est_H(:, next_id);
+                    obj.est_Y(next_id) = drones_list{next_id}.est_Y(next_id);
+                end
             end
-            if(obj.id == 1)
-                prev_id = size(drones_list, 2);
-                obj.est_H(:, prev_id) = drones_list{prev_id}.est_H(:, prev_id);
-                obj.est_Y(prev_id) = drones_list{prev_id}.est_Y(prev_id);
-                obj.est_H(:, next_id) = drones_list{next_id}.est_H(:, next_id);
-                obj.est_Y(next_id) = drones_list{next_id}.est_Y(next_id);
-            end
-            if(obj.id == size(drones_list, 2))
-                next_id = 1;
-                obj.est_H(:, prev_id) = drones_list{prev_id}.est_H(:, prev_id);
-                obj.est_Y(prev_id) = drones_list{prev_id}.est_Y(prev_id);
-                obj.est_H(:, next_id) = drones_list{next_id}.est_H(:, next_id);
-                obj.est_Y(next_id) = drones_list{next_id}.est_Y(next_id);
-            end
-            %%% METTERE QUESTO CASO SOLO PER TRAIETTORIA RECT
+       
+            %%% 
             % if(prev_id >= 1)
             %     obj.est_H(:, prev_id) = drones_list{prev_id}.est_H(:, prev_id);
             %     obj.est_Y(prev_id) = drones_list{prev_id}.est_Y(prev_id);

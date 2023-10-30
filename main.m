@@ -12,7 +12,7 @@ threshold = 0.0001; %--> 1cm
 global time_step;
 time_step = 0.01;
 global distributed_estimation_mode;
-distributed_estimation_mode = false;
+distributed_estimation_mode = true;
 global dronesSetted;
 dronesSetted = false;
 global trajectory_type;
