@@ -5,22 +5,22 @@ import Plotter.*
 
 %% CHOSEN Variables
 show_simulation = true;
-control_time = 4; %2 for the centralized mode, 1 for the distributed 
+control_time = 4; %SEMPRE 4  
 global threshold;
-%threshold = 0.00001; % --> 1mm PER IL CASO DISTRIBUITO
+%threshold = 0.00005; % --> 5mm 
 threshold = 0.0001; %--> 1cm 
 global time_step;
 time_step = 0.01;
 global distributed_estimation_mode;
-distributed_estimation_mode = true;
+distributed_estimation_mode = false;
 global dronesSetted;
 dronesSetted = false;
 global trajectory_type;
-trajectory_type = "circ"; % Either "circ","patrol","rect"
+trajectory_type = "rect"; % Either "circ","patrol","rect"
 global see_text;
 see_text = false;
 global drones_num;
-drones_num = 2;
+drones_num = 10;
 
 %% Constants
 NONE = -1;
@@ -30,7 +30,7 @@ drones_y_array = zeros(1, drones_num);
 artva = NONE;
 est_artva = NONE;
 est_S = eye(10);
-est_beta = 1.0;
+est_beta = 0.999;
 est_Y = zeros(drones_num, 1);
 est_X = zeros(10, 1);
 est_H = zeros(10, drones_num);
@@ -48,7 +48,7 @@ k = 1;
 est_artva_x_array = zeros(1, drones_num);
 est_artva_y_array = zeros(1, drones_num);
 consensus_mean_array = zeros(2,drones_num);
-sync_delay = 1; % In seconds
+sync_delay = 0.1; % In seconds
 
 %% Init
 [drones_list, artva, est_artva] = setup(drones_num);
@@ -70,8 +70,8 @@ while true
             est_H(:,i) = phi;
             est_Y(i) = signal;
         end
-        % est_X = est_X + inv(est_S)*est_H*(est_Y - est_H.'*est_X);
-        est_X = est_X + est_S\(est_H*(est_Y - est_H.'*est_X)); % Should be better than previous version
+        est_X = est_X + pinv(est_S)*est_H*(est_Y - est_H.'*est_X);
+        %est_X = est_X + est_S\(est_H*(est_Y - est_H.'*est_X)); % Should be better than previous version
         est_S = est_beta*est_S + est_H * est_H.';
         est_artva.position = [est_X(7), est_X(8), est_X(9)];
         % Save the values to check when the algorithm is not updating the values anymore
@@ -79,7 +79,7 @@ while true
         [result,check,k,history_var] = stopping_criterium(history_var,check,k);
         if result
             disp("The value of the estimate did not change by " + threshold*100 + " m for more than "+ control_time + "s")
-            disp("You have estimated the goal with an error of: " + norm((artva.position'*100) - (est_artva.position'*100)) + " m");
+            disp("You have estimated the goal with an error of: " + norm((artva.position*100) - (est_artva.position*100)) + " m");
             disp("Simulation stopped at: " + time_instant + " seconds" );
             disp("Goal position:" );
             artva.position
@@ -95,9 +95,9 @@ while true
             drones_y_array(i) = drones_list{i}.position(2);
             if(mod(time_instant, sync_delay) <= 0.01)
                 drones_list{i} = drones_list{i}.sync(drones_list);
-                if(i==1)
-                    disp("Syncing")
-                end
+                % if(i==1)
+                %     disp("Syncing")
+                % end
             end
             drones_list{i} = drones_list{i}.estimate(artva);
             est_artva_x_array(i) = drones_list{i}.est_pos(1);
@@ -107,14 +107,14 @@ while true
             consensus_mean_array(:,i) = drones_list{i}.z_new;
         end
         
-        history_var(:,k) = consensus_mean_array(1,1:2);
+        history_var(:,k) = consensus_mean_array(1:2,drones_num); % prendo l'ultimo perchè nella rect è quello che fa più strada 
         %history_var(:,k) = mean([est_artva_x_array; est_artva_y_array],2);
         if dronesSetted
-            [result,check,k,history_var] = stopping_criterium(history_var,check,k); %#ok<UNRCH>
+            [result,check,k,history_var] = stopping_criterium(history_var,check,k); 
             if result
                 disp("The value of the estimate did not change by " + threshold*100 + " m for more than " + control_time + "s")
                 disp("You have estimated the goal with a TRUE  error of: " + norm((artva.position(1,1:2)*100) - (mean([est_artva_x_array; est_artva_y_array],2)'*100)) + "m");
-                disp("You have estimated the goal with an error wrt CONSENSUs MEAN: " + norm((artva.position(1,1:2)*100) - (consensus_mean_array(:,1)'*100)) + "m");
+                disp("You have estimated the goal with an error wrt CONSENSUS MEAN: " + norm((artva.position(1,1:2)*100) - (consensus_mean_array(:,drones_num)'*100)) + "m");
                 disp("Simulation stopped at: " + time_instant + " seconds" );
                 disp("Goal position:" );
                 artva.position
@@ -151,12 +151,12 @@ global control_steps;
 global last_estimate;
 %sum(check(1,:),'all')
 % If for consecutives times the check is always true then stop the simulation
-if sum(check(1,:),'all') == 0 && (norm(history_var(:,1) - history_var(:,control_steps)) < threshold)
+if sum(check(1,:),'all') == 0 && (norm(history_var(:,1)' - history_var(:,control_steps)') < threshold)
     result = true;
 end
 
 if k > 1
-    if norm(history_var(:,k) - history_var(:,k-1)) < threshold
+    if norm(history_var(:,k)' - history_var(:,k-1)') < threshold
         check(1,k) = 0;
     else 
         check(1,k) = 1;
@@ -164,7 +164,7 @@ if k > 1
 end
 
 if k == 1
-    if norm(history_var(:,1) - last_estimate) < threshold
+    if norm(history_var(:,1)' - last_estimate') < threshold
         check(1,1) = 0;
     else 
         check(1,1) = 1;
@@ -173,7 +173,7 @@ end
 
 if k == control_steps
     last_estimate = history_var(:,k);
-    if norm(history_var(:,k) - history_var(:,k-1)) < threshold
+    if norm(history_var(:,k)' - history_var(:,k-1)') < threshold
         check(1,k) = 0;
     else 
         check(1,k) = 1;
@@ -195,7 +195,7 @@ if trajectory_type == "rect"
         drones_list{i} = drones_list{i}.setGoal([(i-1/2)/drones_num, 0, 0]);
     end
     %artva = Artva([rand, rand, 0]);
-    artva = Artva([0.9, 0.9, 0]);
+    artva = Artva([0.42, 0.9,0]);
 
 elseif trajectory_type == "circ"
     global angles;
