@@ -20,7 +20,9 @@ trajectory_type = "rect"; % Either "circ","patrol","rect"
 global see_text;
 see_text = false;
 global drones_num;
-drones_num = 10;
+drones_num = 2;
+global desired_goal;
+desired_goal = [0.81, 0.90 ,0];
 
 %% Constants
 NONE = -1;
@@ -187,6 +189,7 @@ end
 function [drones_list, artva, est_artva] =  setup(drones_num)
 disp("Setup started!")
 global trajectory_type;
+global desired_goal;
 drones_list = cell([1, drones_num]);
 
 if trajectory_type == "rect"
@@ -194,8 +197,7 @@ if trajectory_type == "rect"
         drones_list{i} = Drone(i, [0, 0, 0]);
         drones_list{i} = drones_list{i}.setGoal([(i-1/2)/drones_num, 0, 0]);
     end
-    %artva = Artva([rand, rand, 0]);
-    artva = Artva([0.42, 0.9,0]);
+    artva = Artva(desired_goal);
 
 elseif trajectory_type == "circ"
     global angles;
@@ -216,8 +218,7 @@ elseif trajectory_type == "circ"
             drones_list{i} = drones_list{i}.setGoal([-1/m, -1, 0]);
         end
     end
-    %artva = Artva([-1 + 2 * rand,-1 + 2 * rand,0]); %random value between -1 and 1
-    artva = Artva([0.9,0.9, 0]);
+    artva = Artva(desired_goal);
 
 elseif trajectory_type == "patrol"
     global angles;
@@ -253,8 +254,7 @@ elseif trajectory_type == "patrol"
     % movement of the last drone on the y axis towards the top left corner
     drones_list{drones_num} = drones_list{drones_num}.setGoal([0, 1, 0]);
 
-    %artva = Artva([rand, rand, 0]);
-    artva = Artva([0.1,0.1, 0]);
+    artva = Artva(desired_goal);
 
 end
 
